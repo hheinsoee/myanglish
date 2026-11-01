@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>myanglish: Myanmar text to English-letter slugs</title>
-<meta name="description" content="Live demo of myanglish: romanize Myanmar (Burmese) text into clean URL slugs, and hear it with your browser's text-to-speech.">
+<meta name="description" content="Live demo of myanglish: romanize Myanmar (Burmese) text into clean URL slugs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
@@ -39,8 +39,6 @@
   .specimen > div { padding: 22px 0; min-width: 0; }
   .arrow { padding: 22px 24px !important; font: 400 40px/1 var(--serif); color: var(--accent); align-self: center; }
   label { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-  label.live { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--ink); cursor: pointer; }
-  label.live input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
   textarea {
     width: 100%; min-height: 150px; resize: vertical; border: 0; background: transparent; color: var(--ink);
     font: 400 34px/1.6 var(--my); padding: 0; outline: none;
@@ -63,19 +61,6 @@
   .samples button { font: 400 18px/1 var(--my); padding: 10px 14px; border-color: var(--rule); }
 
   h2 { font: italic 400 40px/1 var(--serif); margin: 0 0 8px; }
-  .note { color: var(--muted); max-width: 64ch; font-size: 14px; }
-  .note strong { color: var(--ink); font-weight: 500; }
-  .tts { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 28px; }
-  select { width: 100%; font: 400 14px var(--mono); padding: 10px; background: transparent; color: var(--ink); border: 1px solid var(--ink); border-radius: 8px; }
-  .status { font-size: 13px; margin-top: 10px; min-height: 1.5em; color: var(--muted); }
-  .status.warn { color: var(--accent); }
-
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 18px; }
-  th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 8px 8px 8px 0; }
-  td { border-bottom: 1px solid var(--rule); padding: 7px 8px 7px 0; vertical-align: top; }
-  .offline { color: var(--ok); }
-  .online { color: var(--accent); }
-  .voices { max-height: 320px; overflow: auto; }
 
   code { background: rgba(29,26,22,0.07); padding: 1px 6px; border-radius: 4px; }
   pre { background: var(--ink); color: var(--paper); padding: 18px 20px; border-radius: 8px; overflow: auto; font-size: 14px; }
@@ -85,7 +70,6 @@
   @media (max-width: 760px) {
     .specimen { grid-template-columns: 1fr; }
     .arrow { padding: 0 !important; transform: rotate(90deg); justify-self: start; }
-    .tts { grid-template-columns: 1fr; }
     textarea { font-size: 28px; }
   }
   @media (prefers-reduced-motion: no-preference) {
@@ -117,9 +101,7 @@
       <label for="out">Slug</label>
       <output id="out" for="src" aria-live="polite"></output>
       <div class="row">
-        <button id="play" type="button">▶ Play</button>
         <button id="copy" type="button">Copy</button>
-        <label class="live"><input id="live" type="checkbox" checked> Speak as I type</label>
       </div>
     </div>
   </div>
@@ -131,39 +113,6 @@
     <button type="button" lang="my">အင်္ဂလိပ်စာ</button>
     <button type="button" lang="my">English Grammar ၂၀၂၆</button>
   </div>
-
-  <section aria-labelledby="tts-h">
-    <h2 id="tts-h">Hear it</h2>
-    <p class="note">
-      This uses the browser's built-in <code>speechSynthesis</code>, which reads with the voices your
-      <strong>device</strong> has installed. Voices marked <span class="offline">local</span> work offline;
-      <span class="online">network</span> voices send the text to a speech server and need internet.
-      Most devices have no Burmese voice. If yours has none, the Myanmar button is disabled, but an English voice
-      can still read the romanized slug.
-    </p>
-
-    <div class="tts">
-      <div>
-        <label for="voice-my">Myanmar voice</label>
-        <select id="voice-my"></select>
-        <div class="row"><button id="say-my" type="button">Speak Myanmar</button></div>
-        <div class="status" id="status-my"></div>
-      </div>
-      <div>
-        <label for="voice-en">English voice (reads the slug)</label>
-        <select id="voice-en"></select>
-        <div class="row"><button id="say-en" type="button">Speak slug</button></div>
-        <div class="status" id="status-en"></div>
-      </div>
-    </div>
-
-    <div class="voices">
-      <table>
-        <thead><tr><th>Voice on this device</th><th>Language</th><th>Works</th></tr></thead>
-        <tbody id="voices"></tbody>
-      </table>
-    </div>
-  </section>
 
   <section aria-labelledby="use-h">
     <h2 id="use-h">Use it</h2>
@@ -185,18 +134,12 @@ slugify('မြန်မာ')   // 'myan-ma'</code></pre>
   const $ = (id) => document.getElementById(id)
   const src = $('src'), out = $('out')
 
-  let liveTimer
-  let sayEn = () => {}
   const render = () => { out.textContent = slugify(src.value) }
-  src.addEventListener('input', () => {
-    render()
-    clearTimeout(liveTimer)
-    if ($('live').checked) liveTimer = setTimeout(() => sayEn(), 500)
-  })
+  src.addEventListener('input', render)
   render()
 
   document.querySelectorAll('.samples button').forEach((b) =>
-    b.addEventListener('click', () => { src.value = b.textContent; render(); sayEn(); src.focus() }))
+    b.addEventListener('click', () => { src.value = b.textContent; render(); src.focus() }))
 
   $('copy').addEventListener('click', async () => {
     if (!out.textContent) return
@@ -204,68 +147,6 @@ slugify('မြန်မာ')   // 'myan-ma'</code></pre>
     $('copy').textContent = 'Copied'
     setTimeout(() => { $('copy').textContent = 'Copy' }, 1200)
   })
-
-  // ---- text-to-speech ----
-  const synth = window.speechSynthesis
-  const isMy = (v) => v.lang.toLowerCase().startsWith('my')
-  const isEn = (v) => v.lang.toLowerCase().startsWith('en')
-
-  function fill(select, voices, button, status, emptyMsg) {
-    select.replaceChildren(...voices.map((v, i) => {
-      const o = document.createElement('option')
-      o.value = String(i)
-      o.textContent = `${v.name} (${v.localService ? 'local' : 'network'})`
-      return o
-    }))
-    select.disabled = button.disabled = voices.length === 0
-    status.textContent = voices.length ? '' : emptyMsg
-    status.classList.toggle('warn', voices.length === 0)
-  }
-
-  let myVoices = [], enVoices = []
-  function loadVoices() {
-    const all = synth.getVoices()
-    myVoices = all.filter(isMy)
-    enVoices = all.filter(isEn)
-    fill($('voice-my'), myVoices, $('say-my'), $('status-my'), 'No Burmese voice on this device.')
-    fill($('voice-en'), enVoices, $('say-en'), $('status-en'), 'No English voice on this device.')
-    $('voices').replaceChildren(...all.map((v) => {
-      const tr = document.createElement('tr')
-      const cls = v.localService ? 'offline' : 'online'
-      tr.innerHTML = `<td></td><td></td><td class="${cls}">${v.localService ? 'local' : 'network'}</td>`
-      tr.children[0].textContent = v.name
-      tr.children[1].textContent = v.lang
-      return tr
-    }))
-  }
-
-  function speak(text, voice, lang, status) {
-    if (!text) return
-    synth.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.voice = voice
-    u.lang = lang
-    u.onstart = () => { status.textContent = `Speaking with ${voice.name}…` }
-    u.onend = () => { status.textContent = '' }
-    u.onerror = (e) => { status.textContent = `Failed: ${e.error}${voice.localService ? '' : '. This network voice needs internet.'}` }
-    synth.speak(u)
-  }
-
-  if (!synth) {
-    for (const id of ['say-my', 'say-en', 'voice-my', 'voice-en']) $(id).disabled = true
-    $('status-my').textContent = 'This browser has no speechSynthesis.'
-  } else {
-    loadVoices()
-    synth.addEventListener('voiceschanged', loadVoices)
-    $('say-my').addEventListener('click', () =>
-      speak(src.value, myVoices[+$('voice-my').value], 'my-MM', $('status-my')))
-    sayEn = () => {
-      const v = enVoices[+$('voice-en').value]
-      if (v) speak(out.textContent.replaceAll('-', ' '), v, 'en-US', $('status-en'))
-    }
-    $('say-en').addEventListener('click', sayEn)
-    $('play').addEventListener('click', sayEn)
-  }
 </script>
 </body>
 </html>
