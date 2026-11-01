@@ -1,0 +1,42 @@
+name: Publish
+
+# Push a tag `vX.Y.Z` matching package.json's version to release.
+# Auth is npm trusted publishing (OIDC): no NPM_TOKEN secret exists or is needed.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  id-token: write # OIDC token for npm; also signs the provenance attestation
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Tag must match package.json version
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json $version"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4 # version comes from package.json `packageManager`
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # never cache in release builds
+
+      - name: Trusted publishing needs npm >= 11.5.1
+        run: npm install -g npm@^11.5.1
+
+      - run: pnpm install --frozen-lockfile
+
+      # prepublishOnly runs `pnpm build && pnpm test` before upload.
+      - run: npm publish --access public

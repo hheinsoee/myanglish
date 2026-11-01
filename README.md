@@ -24,4 +24,13 @@ Burmese romanization is editorial, not deterministic. This gives a sensible defa
 
 ## License
 
+## Releasing
+
+GitHub Actions publishes on a version tag (npm trusted publishing, no token):
+
+```sh
+npm version patch   # bumps package.json, commits, tags vX.Y.Z
+git push --follow-tags
+```
+
 MIT
