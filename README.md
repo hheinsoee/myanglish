@@ -22,8 +22,6 @@ slugify('English Grammar ၂၀၂၆') // 'english-grammar-2026'
 
 Burmese romanization is editorial, not deterministic. This gives a sensible default, not an official transliteration, so let people override it where it matters.
 
-## License
-
 ## Releasing
 
 GitHub Actions publishes on a version tag (npm trusted publishing, no token):
@@ -32,5 +30,7 @@ GitHub Actions publishes on a version tag (npm trusted publishing, no token):
 npm version patch   # bumps package.json, commits, tags vX.Y.Z
 git push --follow-tags
 ```
+
+## License
 
 MIT
